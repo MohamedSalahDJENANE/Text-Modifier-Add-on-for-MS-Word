@@ -133,6 +133,7 @@ async function findAndHighlightTraces(highlight) {
                 });
                 updateStatus(`Highlighted ${count} traces.`);
             } else {
+                // To remove highlights, we must iterate through paragraphs and ranges
                 const paragraphs = context.document.body.paragraphs;
                 paragraphs.load("items/font");
                 await context.sync();
@@ -143,6 +144,7 @@ async function findAndHighlightTraces(highlight) {
                     await context.sync();
 
                     for (const range of searchResults.items) {
+                      // Word returns color as #RRGGBB, so we compare in a case-insensitive way
                       if (range.font.highlightColor && range.font.highlightColor.toLowerCase() === highlightColor.toLowerCase()) {
                           range.font.highlightColor = null; // Set highlight to null to remove it
                           count++;
