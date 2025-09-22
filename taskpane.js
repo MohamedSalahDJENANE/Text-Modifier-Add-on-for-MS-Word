@@ -143,7 +143,7 @@ async function findAndHighlightTraces(highlight) {
                     await context.sync();
 
                     for (const range of searchResults.items) {
-                      if (range.font.highlightColor === highlightColor) {
+                      if (range.font.highlightColor && range.font.highlightColor.toLowerCase() === highlightColor.toLowerCase()) {
                           range.font.highlightColor = null; // Set highlight to null to remove it
                           count++;
                       }
@@ -162,7 +162,9 @@ async function findAndHighlightTraces(highlight) {
 
 function updateStatus(message) {
   const statusDiv = document.getElementById('status');
-  statusDiv.textContent = message;
+  if (statusDiv) {
+    statusDiv.textContent = message;
+  }
 }
 
 // --- HELPER FUNCTIONS ---
