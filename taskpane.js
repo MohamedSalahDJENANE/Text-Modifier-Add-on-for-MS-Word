@@ -55,7 +55,7 @@ async function processDocument() {
     await Word.run(async (context) => {
       const body = context.document.body;
       const paragraphs = body.paragraphs;
-      paragraphs.load("items");
+      paragraphs.load("items/text"); // Load paragraph text
       await context.sync();
 
       const settings = getSettings();
@@ -68,27 +68,21 @@ async function processDocument() {
         });
       }
       
-      for (let i = 0; i < paragraphs.items.length; i++) {
-        const paragraph = paragraphs.items[i];
-        const searchResults = paragraph.search(Word.SearchLocation.whole, { matchWildCards: true, text: "[a-zA-Z0-9,.;!?']*" });
-        searchResults.load("items/text");
-        await context.sync();
-        
-        for (let j = 0; j < searchResults.items.length; j++) {
-            let originalText = searchResults.items[j].text;
-            let modifiedText = originalText;
+      for (const paragraph of paragraphs.items) {
+        // We must process paragraph by paragraph for Word.js
+        const originalText = paragraph.text;
+        let modifiedText = originalText;
 
-            // Apply modifications
-            if (settings.watermark) modifiedText = modifiedText.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s+/g, ' ');
-            if (settings.spaceInsertion) modifiedText = insertSpaces(modifiedText, settings.spacePunctuation, settings.spaceInsertionProb);
-            if (settings.homoglyph) modifiedText = substituteHomoglyphs(modifiedText, settings.homoglyphProb);
-            if (settings.synonym && Object.keys(activeSynonymMap).length > 0) modifiedText = replaceSynonyms(modifiedText, settings.synonymProb, activeSynonymMap);
-            if (settings.wordInsertion) modifiedText = insertWords(modifiedText, settings.wordInsertionProb);
-            if (settings.spelling) modifiedText = varySpelling(modifiedText, settings.spellingType);
-            
-            if(originalText !== modifiedText) {
-                searchResults.items[j].insertText(modifiedText, Word.InsertLocation.replace);
-            }
+        // Apply modifications
+        if (settings.watermark) modifiedText = modifiedText.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s{2,}/g, ' ');
+        if (settings.spaceInsertion) modifiedText = insertSpaces(modifiedText, settings.spacePunctuation, settings.spaceInsertionProb);
+        if (settings.homoglyph) modifiedText = substituteHomoglyphs(modifiedText, settings.homoglyphProb);
+        if (settings.synonym && Object.keys(activeSynonymMap).length > 0) modifiedText = replaceSynonyms(modifiedText, settings.synonymProb, activeSynonymMap);
+        if (settings.wordInsertion) modifiedText = insertWords(modifiedText, settings.wordInsertionProb);
+        if (settings.spelling) modifiedText = varySpelling(modifiedText, settings.spellingType);
+        
+        if(originalText !== modifiedText) {
+            paragraph.insertText(modifiedText, Word.InsertLocation.replace);
         }
       }
 
@@ -109,8 +103,9 @@ async function findAndHighlightTraces(highlight) {
             let count = 0;
 
             if (highlight) {
-                const searchPattern = `(?i)(${AI_TRACE_PATTERNS.join('|')})`;
-                const searchResults = body.search(searchPattern, { matchWildCards: true });
+                // Using the Word API's built-in regex search is much more efficient.
+                const searchPattern = `(${AI_TRACE_PATTERNS.join('|')})`;
+                const searchResults = body.search(searchPattern, { matchCase: false, matchWildCards: true });
                 searchResults.load("items");
                 await context.sync();
 
@@ -120,17 +115,25 @@ async function findAndHighlightTraces(highlight) {
                 });
                 updateStatus(`Highlighted ${count} traces.`);
             } else {
-                // To remove, we search for any text with the specific highlight color
-                const searchResults = body.search("*", { matchWildCards: true });
-                searchResults.load("items/font");
+                // To remove, we search for any text with the specific highlight color.
+                // This is a workaround since Word.js doesn't directly support finding highlights.
+                // We'll have to iterate.
+                const paragraphs = context.document.body.paragraphs;
+                paragraphs.load("items/font");
                 await context.sync();
 
-                searchResults.items.forEach(item => {
-                    if (item.font.highlightColor === highlightColor) {
-                        item.delete();
-                        count++;
-                    }
-                });
+                for (const para of paragraphs.items) {
+                    const searchResults = para.search("*", {matchWildCards: true});
+                    searchResults.load("items/font");
+                    await context.sync();
+
+                    searchResults.items.forEach(range => {
+                        if (range.font.highlightColor === highlightColor) {
+                            range.delete();
+                            count++;
+                        }
+                    });
+                }
                 updateStatus(`Deleted ${count} highlighted sections.`);
             }
             await context.sync();
@@ -147,8 +150,110 @@ function updateStatus(message) {
   statusDiv.textContent = message;
 }
 
-// All helper functions (insertSpaces, substituteHomoglyphs, etc.) and FULL_DICTIONARY remain the same
-// ... [The FULL_DICTIONARY and all helper functions from the Word taskpane.js are assumed to be here]
+// --- HELPER FUNCTIONS ---
+
+function insertSpaces(text, punctuationStr, probability) {
+  if (!punctuationStr || probability === 0) return text;
+  const punctuationChars = new RegExp(`([\\S])([${punctuationStr.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}])`, 'g');
+  return text.replace(punctuationChars, (match, charBefore, punc) => {
+    if (Math.random() < probability) {
+      return `${charBefore} ${punc}`;
+    }
+    return match;
+  });
+}
+
+function substituteHomoglyphs(text, probability) {
+  if (probability === 0) return text;
+  const homoglyphs = { 'a': 'а', 'e': 'е', 'o': 'о', 'c': 'с', 'i': 'і', 'p': 'р', 's': 'ѕ', 'x': 'х', 'A': 'А', 'E': 'Е', 'O': 'О', 'C': 'С', 'I': 'І', 'P': 'Р', 'S': 'Ѕ', 'X': 'Х' };
+  return text.split('').map(char => (homoglyphs[char] && Math.random() < probability) ? homoglyphs[char] : char).join('');
+}
+
+function replaceSynonyms(text, probability, synonymMap) {
+  const wordList = Object.keys(synonymMap).join('|');
+  const regex = new RegExp(`\\b(${wordList})\\b`, 'gi');
+  return text.replace(regex, (originalWord) => {
+    if (Math.random() < probability) {
+      const lowerWord = originalWord.toLowerCase();
+      const synonyms = synonymMap[lowerWord];
+      const chosenSynonym = synonyms[Math.floor(Math.random() * synonyms.length)];
+
+      if (originalWord === originalWord.toUpperCase()) return chosenSynonym.toUpperCase();
+      if (originalWord[0] === originalWord[0].toUpperCase()) return chosenSynonym.charAt(0).toUpperCase() + chosenSynonym.slice(1);
+      return chosenSynonym;
+    }
+    return originalWord;
+  });
+}
+
+function insertWords(text, probability) {
+  if (probability === 0) return text;
+  const commonWords = ["actually", "basically", "literally", "really", "just", "sort of", "kind of", "well", "essentially"];
+  return text.replace(/\b(\w{3,})\b/g, (word) => {
+    if (Math.random() < probability) {
+      return word + " " + commonWords[Math.floor(Math.random() * commonWords.length)];
+    }
+    return word;
+  });
+}
+
+function varySpelling(text, direction) {
+  const usToUk = {"analyze":"analyse","behavior":"behaviour","center":"centre","color":"colour","defense":"defence","favorite":"favourite","flavor":"flavour","gray":"grey","humor":"humour","labor":"labour","license":"licence","neighbor":"neighbour","organize":"organise","realize":"realise","recognize":"recognise","theater":"theatre","traveled":"travelled"};
+  const ukToUs = Object.keys(usToUk).reduce((obj, key) => { obj[usToUk[key]] = key; return obj; }, {});
+  const map = direction === "usToUk" ? usToUk : (direction === "ukToUs" ? ukToUs : (Math.random() < 0.5 ? usToUk : ukToUs));
+  const wordList = Object.keys(map).join('|');
+  const regex = new RegExp(`\\b(${wordList})\\b`, 'gi');
+  
+  return text.replace(regex, (originalWord) => {
+    const lowerWord = originalWord.toLowerCase();
+    const replacement = map[lowerWord];
+    if (originalWord === originalWord.toUpperCase()) return replacement.toUpperCase();
+    if (originalWord[0] === originalWord[0].toUpperCase()) return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+    return replacement;
+  });
+}
+
+// --- BUILT-IN DICTIONARIES & PATTERNS ---
+const AI_TRACE_PATTERNS = [
+  "certainly, here('s| is)", "of course, here('s| is)", "sure, here('s| is)",
+  "here('s| is) (a|an|the|your|what i found|what i came up with|how you can|how you could)",
+  "here is a brief", "here is a summary", "here is an outline",
+  "here is an introduction for you", "here's an introduction for you", 
+  "here is a summary for you", "here's a summary for you",
+  "certainly, i can help with that",
+  "let’s break it down", "let me explain",
+  "to begin with,?", "firstly,?", "first of all,?",
+  "in conclusion,", "in summary,", "to summarize,", "in sum,", "to sum up,", "overall,",
+  "put simply,", "in short,", "all in all,", "the key takeaway is",
+  "the main idea is", "ultimately,", "the bottom line is",
+  "(i )?hope this (helps|was helpful|is helpful|information helps|is useful)",
+  "let me know if you have any (other|further) questions",
+  "let me know if you need anything else",
+  "feel free to (ask|reach out)",
+  "please don’t hesitate to ask",
+  "as a large language model,", "as an ai language model,", "as an ai,",
+  "as an artificial intelligence,", "i am an ai,", "i’m an ai,",
+  "i (cannot|can't|am not able to|am unable to)",
+  "i do not have the ability to", "i don’t have personal opinions",
+  "i don’t have beliefs", "i do not have beliefs",
+  "i don’t have personal experiences", "i lack personal experiences",
+  "my knowledge cutoff is", "my training data only goes up to",
+  "my knowledge is current up to",
+  "it is important to note", "it should be noted", "it’s worth noting that",
+  "it is also important to note", "please note that",
+  "however, it’s also important to consider",
+  "it’s important to remember that",
+  "keep in mind that", "one thing to keep in mind",
+  "additionally,", "furthermore,", "moreover,",
+  "let’s go step by step", "let’s go through this",
+  "to put it another way", "in other words,",
+  "let’s break this down", "to clarify,",
+  "this means that", "what this implies is",
+  "you could try", "you might consider",
+  "one approach is", "another option is",
+  "a common way to do this is", "a possible solution is",
+  "an alternative is", "the recommended way is"
+];
 
 const FULL_DICTIONARY = {
   "general": {
