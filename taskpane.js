@@ -4,28 +4,26 @@
  */
 
 // This is the core function that ensures the Office environment is ready before running any code.
+// The "DOMContentLoaded" listener has been removed to prevent race conditions.
 Office.onReady(info => {
   if (info.host === Office.HostType.Word) {
-    // Wait for the DOM to be fully loaded before attaching event handlers
-    document.addEventListener("DOMContentLoaded", function() {
-      // Attach event listeners to all UI elements
-      document.getElementById("processBtn").addEventListener("click", processDocument);
-      document.getElementById("highlightBtn").addEventListener("click", () => findAndHighlightTraces(true));
-      document.getElementById("deleteBtn").addEventListener("click", () => findAndHighlightTraces(false));
+    // Attach event listeners to all UI elements now that Office is ready.
+    document.getElementById("processBtn").addEventListener("click", processDocument);
+    document.getElementById("highlightBtn").addEventListener("click", () => findAndHighlightTraces(true));
+    document.getElementById("deleteBtn").addEventListener("click", () => findAndHighlightTraces(false));
 
-      // Slider value displays
-      document.getElementById('spaceInsertionProb').addEventListener('input', e => document.getElementById('spaceInsertionProbValue').textContent = e.target.value);
-      document.getElementById('homoglyphProb').addEventListener('input', e => document.getElementById('homoglyphProbValue').textContent = e.target.value);
-      document.getElementById('synonymProb').addEventListener('input', e => document.getElementById('synonymProbValue').textContent = e.target.value);
-      document.getElementById('wordInsertionProb').addEventListener('input', e => document.getElementById('wordInsertionProbValue').textContent = e.target.value);
+    // Slider value displays
+    document.getElementById('spaceInsertionProb').addEventListener('input', e => document.getElementById('spaceInsertionProbValue').textContent = e.target.value);
+    document.getElementById('homoglyphProb').addEventListener('input', e => document.getElementById('homoglyphProbValue').textContent = e.target.value);
+    document.getElementById('synonymProb').addEventListener('input', e => document.getElementById('synonymProbValue').textContent = e.target.value);
+    document.getElementById('wordInsertionProb').addEventListener('input', e => document.getElementById('wordInsertionProbValue').textContent = e.target.value);
 
-      // Toggle synonym options visibility
-      const chkSynonym = document.getElementById('chkSynonym');
-      const synonymOptions = document.getElementById('synonym-options');
-      synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
-      chkSynonym.addEventListener('change', () => {
-          synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
-      });
+    // Toggle synonym options visibility
+    const chkSynonym = document.getElementById('chkSynonym');
+    const synonymOptions = document.getElementById('synonym-options');
+    synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
+    chkSynonym.addEventListener('change', () => {
+        synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
     });
   }
 });
@@ -127,14 +125,14 @@ async function findAndHighlightTraces(highlight) {
                     searchResults.load("items/font");
                     await context.sync();
 
-                    searchResults.items.forEach(range => {
-                        if (range.font.highlightColor === highlightColor) {
-                            range.delete();
-                            count++;
-                        }
-                    });
+                    for (const range of searchResults.items) {
+                      if (range.font.highlightColor === highlightColor) {
+                          range.font.highlightColor = null; // More robust than delete
+                          count++;
+                      }
+                    }
                 }
-                updateStatus(`Deleted ${count} highlighted sections.`);
+                updateStatus(`Deleted highlights from ${count} sections.`);
             }
             await context.sync();
         });
@@ -501,59 +499,5 @@ const FULL_DICTIONARY = {
     "synergy": ["collaboration", "cooperation", "combined effort", "teamwork", "combined action"]
   }
 };
-
-const AI_TRACE_PATTERNS = [
-  // Common Starters & Introductions
-  "certainly, here('s| is)", "of course, here('s| is)", "sure, here('s| is)",
-  "here('s| is) (a|an|the|your|what i found|what i came up with|how you can|how you could)",
-  "here is a brief", "here is a summary", "here is an outline",
-  "here is an introduction for you", "here's an introduction for you", 
-  "here is a summary for you", "here's a summary for you",
-  "certainly, i can help with that",
-  "let’s break it down", "let me explain",
-  "to begin with,?", "firstly,?", "first of all,?",
-
-  // Summaries & Conclusions
-  "in conclusion,", "in summary,", "to summarize,", "in sum,", "to sum up,", "overall,",
-  "put simply,", "in short,", "all in all,", "the key takeaway is",
-  "the main idea is", "ultimately,", "the bottom line is",
-
-  // Polite Closings
-  "(i )?hope this (helps|was helpful|is helpful|information helps|is useful)",
-  "let me know if you have any (other|further) questions",
-  "let me know if you need anything else",
-  "feel free to (ask|reach out)",
-  "please don’t hesitate to ask",
-
-  // AI Identity / Limitations
-  "as a large language model,", "as an ai language model,", "as an ai,",
-  "as an artificial intelligence,", "i am an ai,", "i’m an ai,",
-  "i (cannot|can't|am not able to|am unable to)",
-  "i do not have the ability to", "i don’t have personal opinions",
-  "i don’t have beliefs", "i do not have beliefs",
-  "i don’t have personal experiences", "i lack personal experiences",
-  "my knowledge cutoff is", "my training data only goes up to",
-  "my knowledge is current up to",
-
-  // Noting & Hedging Phrases
-  "it is important to note", "it should be noted", "it’s worth noting that",
-  "it is also important to note", "please note that",
-  "however, it’s also important to consider",
-  "it’s important to remember that",
-  "keep in mind that", "one thing to keep in mind",
-  "additionally,", "furthermore,", "moreover,",
-
-  // Explaining / Teacher-Like Style
-  "let’s go step by step", "let’s go through this",
-  "to put it another way", "in other words,",
-  "let’s break this down", "to clarify,",
-  "this means that", "what this implies is",
-
-  // Suggestion / Instruction Phrases
-  "you could try", "you might consider",
-  "one approach is", "another option is",
-  "a common way to do this is", "a possible solution is",
-  "an alternative is", "the recommended way is"
-];
 // ... [The rest of the Code.gs file remains the same]
 
