@@ -6,23 +6,27 @@
 // This is the core function that ensures the Office environment is ready before running any code.
 Office.onReady(info => {
   if (info.host === Office.HostType.Word) {
-    // Attach event listeners to all UI elements now that Office is ready.
-    document.getElementById("processBtn").addEventListener("click", processDocument);
-    document.getElementById("highlightBtn").addEventListener("click", () => findAndHighlightTraces(true));
-    document.getElementById("deleteBtn").addEventListener("click", () => findAndHighlightTraces(false));
+    // Wait for the DOM to be fully loaded before attaching event handlers.
+    // This solves the issue where buttons are not clickable.
+    document.addEventListener("DOMContentLoaded", function() {
+      // Attach event listeners to all UI elements
+      document.getElementById("processBtn").addEventListener("click", processDocument);
+      document.getElementById("highlightBtn").addEventListener("click", () => findAndHighlightTraces(true));
+      document.getElementById("deleteBtn").addEventListener("click", () => findAndHighlightTraces(false));
 
-    // Slider value displays
-    document.getElementById('spaceInsertionProb').addEventListener('input', e => document.getElementById('spaceInsertionProbValue').textContent = e.target.value);
-    document.getElementById('homoglyphProb').addEventListener('input', e => document.getElementById('homoglyphProbValue').textContent = e.target.value);
-    document.getElementById('synonymProb').addEventListener('input', e => document.getElementById('synonymProbValue').textContent = e.target.value);
-    document.getElementById('wordInsertionProb').addEventListener('input', e => document.getElementById('wordInsertionProbValue').textContent = e.target.value);
+      // Slider value displays
+      document.getElementById('spaceInsertionProb').addEventListener('input', e => document.getElementById('spaceInsertionProbValue').textContent = e.target.value);
+      document.getElementById('homoglyphProb').addEventListener('input', e => document.getElementById('homoglyphProbValue').textContent = e.target.value);
+      document.getElementById('synonymProb').addEventListener('input', e => document.getElementById('synonymProbValue').textContent = e.target.value);
+      document.getElementById('wordInsertionProb').addEventListener('input', e => document.getElementById('wordInsertionProbValue').textContent = e.target.value);
 
-    // Toggle synonym options visibility
-    const chkSynonym = document.getElementById('chkSynonym');
-    const synonymOptions = document.getElementById('synonym-options');
-    synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
-    chkSynonym.addEventListener('change', () => {
-        synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
+      // Toggle synonym options visibility
+      const chkSynonym = document.getElementById('chkSynonym');
+      const synonymOptions = document.getElementById('synonym-options');
+      synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
+      chkSynonym.addEventListener('change', () => {
+          synonymOptions.style.display = chkSynonym.checked ? 'block' : 'none';
+      });
     });
   }
 });
