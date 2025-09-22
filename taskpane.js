@@ -51,6 +51,7 @@ function getSettings() {
 async function processDocument() {
   try {
     await Word.run(async (context) => {
+      updateStatus("Processing...");
       const body = context.document.body;
       const paragraphs = body.paragraphs;
       paragraphs.load("items");
@@ -180,8 +181,9 @@ function substituteHomoglyphs(text, probability) {
 }
 
 function replaceSynonyms(text, probability, synonymMap) {
-  const wordList = Object.keys(synonymMap).join('|');
-  const regex = new RegExp(`^(${wordList})$`, 'i'); // Anchor to match the whole word only
+  const wordList = Object.keys(synonymMap);
+  // Create a regex that is case-insensitive and matches whole words only
+  const regex = new RegExp(`^(${wordList.join('|')})$`, 'i');
   if (regex.test(text) && Math.random() < probability) {
       const originalWord = text.match(regex)[0];
       const lowerWord = originalWord.toLowerCase();
@@ -189,7 +191,7 @@ function replaceSynonyms(text, probability, synonymMap) {
       const chosenSynonym = synonyms[Math.floor(Math.random() * synonyms.length)];
 
       if (originalWord === originalWord.toUpperCase()) return chosenSynonym.toUpperCase();
-      if (originalWord[0] === originalWord[0].toUpperCase()) return chosenSynonym.charAt(0).toUpperCase() + chosenSynonym.slice(1);
+      if (originalWord.length > 0 && originalWord[0] === originalWord[0].toUpperCase()) return chosenSynonym.charAt(0).toUpperCase() + chosenSynonym.slice(1);
       return chosenSynonym;
   }
   return text;
