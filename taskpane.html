@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Advanced Text Modifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js" type="text/javascript"></script>
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+<body class="ms-font-m ms-welcome">
+    <div id="content-container">
+        <h3>Select Techniques</h3>
+
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkWatermark"> AI Watermark Remover</label>
+        </div>
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkSpaceInsertion"> Space Insertion</label>
+            <input type="text" id="spacePunctuation" value=".,!?;:" placeholder="Target characters...">
+            <input type="range" id="spaceInsertionProb" min="0" max="1" step="0.01" value="0.5">
+            <div class="slider-value">Probability: <span id="spaceInsertionProbValue">0.5</span></div>
+        </div>
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkHomoglyph"> Homoglyph Substitution</label>
+            <input type="range" id="homoglyphProb" min="0" max="1" step="0.01" value="0.1">
+            <div class="slider-value">Probability: <span id="homoglyphProbValue">0.1</span></div>
+        </div>
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkSynonym"> Synonym Replacement</label>
+            <div id="synonym-options">
+                <div class="category-grid">
+                    <label><input type="checkbox" name="synonym-category" value="general" checked> General</label>
+                    <label><input type="checkbox" name="synonym-category" value="scientific"> Scientific</label>
+                    <label><input type="checkbox" name="synonym-category" value="medical"> Medical</label>
+                    <label><input type="checkbox" name="synonym-category" value="literature"> Literature</label>
+                    <label><input type="checkbox" name="synonym-category" value="physics"> Physics</label>
+                    <label><input type="checkbox" name="synonym-category" value="mathematics"> Mathematics</label>
+                    <label><input type="checkbox" name="synonym-category" value="chemistry"> Chemistry</label>
+                    <label><input type="checkbox" name="synonym-category" value="business"> Business</label>
+                </div>
+                <input type="range" id="synonymProb" min="0" max="1" step="0.01" value="0.1">
+                <div class="slider-value">Probability: <span id="synonymProbValue">0.1</span></div>
+            </div>
+        </div>
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkWordInsertion"> Word Insertion</label>
+            <input type="range" id="wordInsertionProb" min="0" max="1" step="0.01" value="0.05">
+            <div class="slider-value">Probability: <span id="wordInsertionProbValue">0.05</span></div>
+        </div>
+        <div class="feature-block">
+            <label><input type="checkbox" id="chkSpellingVariation"> Spelling Variation</label>
+            <select id="spellingVariantType">
+                <option value="usToUk">US to UK English</option>
+                <option value="ukToUs">UK to US English</option>
+                <option value="random">Random Variations</option>
+            </select>
+        </div>
+        <button id="processBtn" class="action-button">Process Document</button>
+        <div class="separator"></div>
+        <h3>AI Trace Finder</h3>
+        <div class="feature-block">
+            <div class="color-picker-container">
+                <label for="highlightColor">Highlight Color:</label>
+                <input type="color" id="highlightColor" value="#FFFF00">
+            </div>
+            <button id="findBtn" class="action-button secondary">Find & Highlight Traces</button>
+            <button id="deleteBtn" class="action-button tertiary">Delete Highlighted Traces</button>
+        </div>
+        <div id="status" class="status"></div>
+    </div>
+    <script type="text/javascript" src="taskpane.js"></script>
+</body>
+</html>
+

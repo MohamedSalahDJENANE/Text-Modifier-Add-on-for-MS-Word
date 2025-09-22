@@ -1,0 +1,142 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+    padding: 15px;
+    font-size: 14px;
+    margin: 0;
+}
+
+h3 {
+    font-size: 18px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.feature-block {
+    margin-bottom: 20px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 500;
+    color: #343a40;
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    accent-color: #667eea;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.slider-value {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: -2px;
+}
+
+.action-button {
+    width: 100%;
+    padding: 12px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.action-button:hover {
+    box-shadow: 0 7px 20px rgba(102, 126, 234, 0.4);
+    transform: translateY(-2px);
+}
+
+.action-button:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.action-button.primary {
+     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.action-button.secondary {
+    background-color: #6c757d;
+}
+.action-button.tertiary {
+    background-color: #dc3545;
+}
+
+
+.status {
+    margin-top: 15px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    min-height: 20px;
+}
+
+select, input[type="text"] {
+    width: 100%;
+    padding: 6px;
+    margin-top: 8px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  padding-left: 28px;
+}
+
+.category-grid label {
+  font-weight: 400;
+  font-size: 13px;
+}
+#synonym-options {
+    display: none;
+}
+.separator {
+    height: 1px;
+    background-color: #e9ecef;
+    margin: 25px 0;
+}
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+input[type="color"] {
+    width: 40px;
+    height: 30px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px;
+}
+
