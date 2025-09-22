@@ -4,7 +4,6 @@
  */
 
 // This is the core function that ensures the Office environment is ready before running any code.
-// The "DOMContentLoaded" listener has been removed to prevent race conditions.
 Office.onReady(info => {
   if (info.host === Office.HostType.Word) {
     // Attach event listeners to all UI elements now that Office is ready.
@@ -67,7 +66,6 @@ async function processDocument() {
       }
       
       for (const paragraph of paragraphs.items) {
-        // We must process paragraph by paragraph for Word.js
         const originalText = paragraph.text;
         let modifiedText = originalText;
 
@@ -80,6 +78,8 @@ async function processDocument() {
         if (settings.spelling) modifiedText = varySpelling(modifiedText, settings.spellingType);
         
         if(originalText !== modifiedText) {
+            // This method unfortunately destroys formatting.
+            // A more advanced, format-preserving method would be needed for a production add-in.
             paragraph.insertText(modifiedText, Word.InsertLocation.replace);
         }
       }
@@ -101,7 +101,6 @@ async function findAndHighlightTraces(highlight) {
             let count = 0;
 
             if (highlight) {
-                // Using the Word API's built-in regex search is much more efficient.
                 const searchPattern = `(${AI_TRACE_PATTERNS.join('|')})`;
                 const searchResults = body.search(searchPattern, { matchCase: false, matchWildCards: true });
                 searchResults.load("items");
@@ -113,9 +112,6 @@ async function findAndHighlightTraces(highlight) {
                 });
                 updateStatus(`Highlighted ${count} traces.`);
             } else {
-                // To remove, we search for any text with the specific highlight color.
-                // This is a workaround since Word.js doesn't directly support finding highlights.
-                // We'll have to iterate.
                 const paragraphs = context.document.body.paragraphs;
                 paragraphs.load("items/font");
                 await context.sync();
@@ -127,12 +123,12 @@ async function findAndHighlightTraces(highlight) {
 
                     for (const range of searchResults.items) {
                       if (range.font.highlightColor === highlightColor) {
-                          range.font.highlightColor = null; // More robust than delete
+                          range.font.highlightColor = null; // Set highlight to null to remove it
                           count++;
                       }
                     }
                 }
-                updateStatus(`Deleted highlights from ${count} sections.`);
+                updateStatus(`Removed highlights from ${count} sections.`);
             }
             await context.sync();
         });
@@ -499,5 +495,4 @@ const FULL_DICTIONARY = {
     "synergy": ["collaboration", "cooperation", "combined effort", "teamwork", "combined action"]
   }
 };
-// ... [The rest of the Code.gs file remains the same]
 
