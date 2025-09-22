@@ -47,12 +47,13 @@ function getSettings() {
     };
 }
 
+// --- NEW, FORMAT-PRESERVING CORE LOGIC ---
 async function processDocument() {
   try {
     await Word.run(async (context) => {
       const body = context.document.body;
       const paragraphs = body.paragraphs;
-      paragraphs.load("items/text"); // Load paragraph text
+      paragraphs.load("items");
       await context.sync();
 
       const settings = getSettings();
@@ -66,21 +67,35 @@ async function processDocument() {
       }
       
       for (const paragraph of paragraphs.items) {
-        const originalText = paragraph.text;
-        let modifiedText = originalText;
+        // Search for whole words (including punctuation) to process them individually
+        const searchResults = paragraph.search("[a-zA-Z0-9.,!?;:'\"()]+", { matchWildCards: true });
+        searchResults.load("items");
+        await context.sync();
 
-        // Apply modifications
-        if (settings.watermark) modifiedText = modifiedText.replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/\s{2,}/g, ' ');
-        if (settings.spaceInsertion) modifiedText = insertSpaces(modifiedText, settings.spacePunctuation, settings.spaceInsertionProb);
-        if (settings.homoglyph) modifiedText = substituteHomoglyphs(modifiedText, settings.homoglyphProb);
-        if (settings.synonym && Object.keys(activeSynonymMap).length > 0) modifiedText = replaceSynonyms(modifiedText, settings.synonymProb, activeSynonymMap);
-        if (settings.wordInsertion) modifiedText = insertWords(modifiedText, settings.wordInsertionProb);
-        if (settings.spelling) modifiedText = varySpelling(modifiedText, settings.spellingType);
-        
-        if(originalText !== modifiedText) {
-            // This method unfortunately destroys formatting.
-            // A more advanced, format-preserving method would be needed for a production add-in.
-            paragraph.insertText(modifiedText, Word.InsertLocation.replace);
+        for (const range of searchResults.items) {
+            const originalText = range.text;
+            let modifiedText = originalText;
+
+            // Apply modifications to this specific word/range
+            if (settings.watermark) modifiedText = modifiedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
+            if (settings.spaceInsertion) modifiedText = insertSpaces(modifiedText, settings.spacePunctuation, settings.spaceInsertionProb);
+            if (settings.homoglyph) modifiedText = substituteHomoglyphs(modifiedText, settings.homoglyphProb);
+            if (settings.synonym && Object.keys(activeSynonymMap).length > 0) modifiedText = replaceSynonyms(modifiedText, settings.synonymProb, activeSynonymMap);
+            if (settings.wordInsertion) modifiedText = insertWords(modifiedText, settings.wordInsertionProb);
+            if (settings.spelling) modifiedText = varySpelling(modifiedText, settings.spellingType);
+            
+            if (originalText !== modifiedText) {
+                // By replacing text in a specific range, we preserve its formatting
+                range.insertText(modifiedText, Word.InsertLocation.replace);
+            }
+        }
+
+        // Handle watermark spaces separately on the whole paragraph
+        if (settings.watermark) {
+          const spaceResults = paragraph.search("  +", { matchWildCards: true });
+          spaceResults.load("items");
+          await context.sync();
+          spaceResults.items.forEach(range => range.insertText(" ", Word.InsertLocation.replace));
         }
       }
 
@@ -92,6 +107,7 @@ async function processDocument() {
     updateStatus("Error: " + error.message);
   }
 }
+
 
 async function findAndHighlightTraces(highlight) {
     try {
@@ -165,9 +181,9 @@ function substituteHomoglyphs(text, probability) {
 
 function replaceSynonyms(text, probability, synonymMap) {
   const wordList = Object.keys(synonymMap).join('|');
-  const regex = new RegExp(`\\b(${wordList})\\b`, 'gi');
-  return text.replace(regex, (originalWord) => {
-    if (Math.random() < probability) {
+  const regex = new RegExp(`^(${wordList})$`, 'i'); // Anchor to match the whole word only
+  if (regex.test(text) && Math.random() < probability) {
+      const originalWord = text.match(regex)[0];
       const lowerWord = originalWord.toLowerCase();
       const synonyms = synonymMap[lowerWord];
       const chosenSynonym = synonyms[Math.floor(Math.random() * synonyms.length)];
@@ -175,36 +191,32 @@ function replaceSynonyms(text, probability, synonymMap) {
       if (originalWord === originalWord.toUpperCase()) return chosenSynonym.toUpperCase();
       if (originalWord[0] === originalWord[0].toUpperCase()) return chosenSynonym.charAt(0).toUpperCase() + chosenSynonym.slice(1);
       return chosenSynonym;
-    }
-    return originalWord;
-  });
+  }
+  return text;
 }
 
 function insertWords(text, probability) {
   if (probability === 0) return text;
   const commonWords = ["actually", "basically", "literally", "really", "just", "sort of", "kind of", "well", "essentially"];
-  return text.replace(/\b(\w{3,})\b/g, (word) => {
-    if (Math.random() < probability) {
-      return word + " " + commonWords[Math.floor(Math.random() * commonWords.length)];
+   if (/\w{3,}/.test(text) && Math.random() < probability) {
+      return text + " " + commonWords[Math.floor(Math.random() * commonWords.length)];
     }
-    return word;
-  });
+  return text;
 }
 
 function varySpelling(text, direction) {
   const usToUk = {"analyze":"analyse","behavior":"behaviour","center":"centre","color":"colour","defense":"defence","favorite":"favourite","flavor":"flavour","gray":"grey","humor":"humour","labor":"labour","license":"licence","neighbor":"neighbour","organize":"organise","realize":"realise","recognize":"recognise","theater":"theatre","traveled":"travelled"};
   const ukToUs = Object.keys(usToUk).reduce((obj, key) => { obj[usToUk[key]] = key; return obj; }, {});
   const map = direction === "usToUk" ? usToUk : (direction === "ukToUs" ? ukToUs : (Math.random() < 0.5 ? usToUk : ukToUs));
-  const wordList = Object.keys(map).join('|');
-  const regex = new RegExp(`\\b(${wordList})\\b`, 'gi');
   
-  return text.replace(regex, (originalWord) => {
-    const lowerWord = originalWord.toLowerCase();
+  const lowerWord = text.toLowerCase();
+  if (map[lowerWord]) {
     const replacement = map[lowerWord];
-    if (originalWord === originalWord.toUpperCase()) return replacement.toUpperCase();
-    if (originalWord[0] === originalWord[0].toUpperCase()) return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+    if (text === text.toUpperCase()) return replacement.toUpperCase();
+    if (text[0] === text[0].toUpperCase()) return replacement.charAt(0).toUpperCase() + replacement.slice(1);
     return replacement;
-  });
+  }
+  return text;
 }
 
 // --- BUILT-IN DICTIONARIES & PATTERNS ---
