@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Text Modifier Task Pane</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <!-- UI Styling -->
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f8f9fa; color: #212529; padding: 15px; font-size: 14px; margin: 0; }
+        h3 { font-size: 18px; color: #495057; border-bottom: 2px solid #dee2e6; padding-bottom: 8px; margin-top: 20px; margin-bottom: 15px; font-weight: 600; }
+        .feature-block { margin-bottom: 25px; background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        label { display: flex; align-items: center; cursor: pointer; font-weight: 500; color: #343a40; }
+        input[type="checkbox"] { margin-right: 10px; width: 18px; height: 18px; accent-color: #667eea; }
+        input[type="range"] { width: 100%; margin-top: 8px; cursor: pointer; }
+        input[type="color"] { margin-left: auto; border: 1px solid #ccc; background: none; height: 30px; width: 50px; border-radius: 4px; padding: 2px; cursor: pointer; }
+        .slider-value { font-size: 12px; color: #6c757d; margin-top: -2px; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        button:hover {
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        .secondary-btn {
+             background: #6c757d;
+        }
+        .secondary-btn:hover {
+            background: #5a6268;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .status { margin-top: 10px; text-align: center; color: #6c757d; font-style: italic; min-height: 20px; }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 6px;
+            margin-top: 8px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        .category-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin-top: 10px;
+          padding-left: 28px;
+        }
+        .category-grid label {
+          font-weight: 400;
+          font-size: 13px;
+        }
+    </style>
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="ms-font-m ms-welcome">
+    <h3>AI Trace Finder</h3>
+    <div class="feature-block">
+        <label for="highlightColor">
+            Highlight Color
+            <input type="color" id="highlightColor" value="#FFFF00">
+        </label>
+        <button id="findBtn" class="secondary-btn">Find & Highlight Traces</button>
+        <button id="deleteBtn" class="secondary-btn">Delete Highlighted Traces</button>
+    </div>
+
+
+    <h3>Modification Techniques</h3>
+
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkWatermark">
+            AI Watermark Remover
+        </label>
+    </div>
+
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSpaceInsertion">
+            Space Insertion
+        </label>
+        <input type="text" id="spacePunctuation" value=".,!?;:" placeholder="Target characters...">
+        <input type="range" id="spaceInsertionProb" min="0" max="1" step="0.01" value="0.5">
+        <div class="slider-value">Probability: <span id="spaceInsertionProbValue">0.5</span></div>
+    </div>
+
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkHomoglyph">
+            Homoglyph Substitution
+        </label>
+        <input type="range" id="homoglyphProb" min="0" max="1" step="0.01" value="0.1">
+        <div class="slider-value">Probability: <span id="homoglyphProbValue">0.1</span></div>
+    </div>
+
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSynonym">
+            Synonym Replacement
+        </label>
+        <div id="synonym-options" style="display: none;">
+            <div class="category-grid">
+                <label><input type="checkbox" name="synonym-category" value="general" checked> General</label>
+                <label><input type="checkbox" name="synonym-category" value="scientific"> Scientific</label>
+                <label><input type="checkbox" name="synonym-category" value="medical"> Medical</label>
+                <label><input type="checkbox" name="synonym-category" value="literature"> Literature</label>
+                <label><input type="checkbox" name="synonym-category" value="physics"> Physics</label>
+                <label><input type="checkbox" name="synonym-category" value="mathematics"> Mathematics</label>
+                <label><input type="checkbox" name="synonym-category" value="chemistry"> Chemistry</label>
+                <label><input type="checkbox" name="synonym-category" value="business"> Business</label>
+            </div>
+            <input type="range" id="synonymProb" min="0" max="1" step="0.01" value="0.1">
+            <div class="slider-value">Probability: <span id="synonymProbValue">0.1</span></div>
+        </div>
+    </div>
+
+     <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkWordInsertion">
+            Word Insertion
+        </label>
+        <input type="range" id="wordInsertionProb" min="0" max="1" step="0.01" value="0.05">
+        <div class="slider-value">Probability: <span id="wordInsertionProbValue">0.05</span></div>
+    </div>
+
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSpellingVariation">
+            Spelling Variation
+        </label>
+        <select id="spellingVariantType">
+            <option value="usToUk">US to UK English</option>
+            <option value="ukToUs">UK to US English</option>
+            <option value="random">Random Variations</option>
+        </select>
+    </div>
+
+    <button id="processBtn">Process Document with Modifications</button>
+    <div id="status" class="status"></div>
+
+    <!-- Main Logic Script -->
+    <script type="text/javascript" src="taskpane.js"></script>
+</body>
+</html>
