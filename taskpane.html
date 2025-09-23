@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
@@ -8,107 +7,99 @@
     <title>Advanced Text Modifier</title>
 
     <!-- Office JavaScript API -->
-    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
-    
-    <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui. -->
-    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css"/>
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
 
-    <!-- Template styles -->
-    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="taskpane.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
+<body>
+    <h3>AI Trace Finder</h3>
+    <div class="feature-block">
+        <label for="highlightColor">
+            Highlight Color
+            <input type="color" id="highlightColor" value="#ffff00">
+        </label>
+        <button id="findBtn" class="secondary-btn">Find & Highlight Traces</button>
+        <button id="deleteBtn" class="secondary-btn">Delete Highlighted Traces</button>
+    </div>
 
-<body class="ms-font-m ms-welcome ms-Fabric">
-    <main id="app-body" class="ms-welcome__main">
-        <h3 class="ms-font-xl">Select Techniques</h3>
+    <h3>Modification Techniques</h3>
 
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkWatermark" class="ms-Checkbox-input">
-                AI Watermark Remover
-            </label>
-        </div>
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkWatermark">
+            AI Watermark Remover
+        </label>
+    </div>
 
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkSpaceInsertion" class="ms-Checkbox-input">
-                Space Insertion
-            </label>
-            <input type="text" id="spacePunctuation" class="ms-TextField-field" value=".,!?;:">
-            <input type="range" id="spaceInsertionProb" min="0" max="1" step="0.01" value="0.5">
-            <div class="slider-value">Probability: <span id="spaceInsertionProbValue">0.5</span></div>
-        </div>
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSpaceInsertion">
+            Space Insertion
+        </label>
+        <input type="text" id="spacePunctuation" value=".,!?;:" placeholder="Target characters...">
+        <input type="range" id="spaceInsertionProb" min="0" max="1" step="0.01" value="0.5">
+        <div class="slider-value">Probability: <span id="spaceInsertionProbValue">0.5</span></div>
+    </div>
 
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkHomoglyph" class="ms-Checkbox-input">
-                Homoglyph Substitution
-            </label>
-            <input type="range" id="homoglyphProb" min="0" max="1" step="0.01" value="0.1">
-            <div class="slider-value">Probability: <span id="homoglyphProbValue">0.1</span></div>
-        </div>
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkHomoglyph">
+            Homoglyph Substitution
+        </label>
+        <input type="range" id="homoglyphProb" min="0" max="1" step="0.01" value="0.1">
+        <div class="slider-value">Probability: <span id="homoglyphProbValue">0.1</span></div>
+    </div>
 
-        <!-- UPDATED SYNONYM SECTION -->
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkSynonym" class="ms-Checkbox-input">
-                Synonym Replacement
-            </label>
-            <div id="synonym-options">
-                <div class="category-grid">
-                    <label><input type="checkbox" name="synonym-category" value="general" checked> General</label>
-                    <label><input type="checkbox" name="synonym-category" value="scientific"> Scientific</label>
-                    <label><input type="checkbox" name="synonym-category" value="medical"> Medical</label>
-                    <label><input type="checkbox" name="synonym-category" value="literature"> Literature</label>
-                    <label><input type="checkbox" name="synonym-category" value="physics"> Physics</label>
-                    <label><input type="checkbox" name="synonym-category" value="mathematics"> Mathematics</label>
-                    <label><input type="checkbox" name="synonym-category" value="chemistry"> Chemistry</label>
-                    <label><input type="checkbox" name="synonym-category" value="business"> Business</label>
-                </div>
-                <input type="range" id="synonymProb" min="0" max="1" step="0.01" value="0.1">
-                <div class="slider-value">Probability: <span id="synonymProbValue">0.1</span></div>
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSynonym">
+            Synonym Replacement
+        </label>
+        <div id="synonym-options">
+            <div class="category-grid">
+                <label><input type="checkbox" name="synonym-category" value="general" checked> General</label>
+                <label><input type="checkbox" name="synonym-category" value="scientific"> Scientific</label>
+                <label><input type="checkbox" name="synonym-category" value="medical"> Medical</label>
+                <label><input type="checkbox" name="synonym-category" value="literature"> Literature</label>
+                <label><input type="checkbox" name="synonym-category" value="physics"> Physics</label>
+                <label><input type="checkbox" name="synonym-category" value="mathematics"> Mathematics</label>
+                <label><input type="checkbox" name="synonym-category" value="chemistry"> Chemistry</label>
+                <label><input type="checkbox" name="synonym-category" value="business"> Business</label>
             </div>
+            <input type="range" id="synonymProb" min="0" max="1" step="0.01" value="0.1">
+            <div class="slider-value">Probability: <span id="synonymProbValue">0.1</span></div>
         </div>
-        <!-- END UPDATED SECTION -->
+    </div>
 
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkWordInsertion" class="ms-Checkbox-input">
-                Word Insertion
-            </label>
-            <input type="range" id="wordInsertionProb" min="0" max="1" step="0.01" value="0.05">
-            <div class="slider-value">Probability: <span id="wordInsertionProbValue">0.05</span></div>
-        </div>
+     <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkWordInsertion">
+            Word Insertion
+        </label>
+        <input type="range" id="wordInsertionProb" min="0" max="1" step="0.01" value="0.05">
+        <div class="slider-value">Probability: <span id="wordInsertionProbValue">0.05</span></div>
+    </div>
 
-        <div class="feature-block">
-            <label class="ms-font-m">
-                <input type="checkbox" id="chkSpellingVariation" class="ms-Checkbox-input">
-                Spelling Variation
-            </label>
-            <select id="spellingVariantType" class="ms-Dropdown-select">
-                <option value="usToUk">US to UK English</option>
-                <option value="ukToUs">UK to US English</option>
-                <option value="random">Random Variations</option>
-            </select>
-        </div>
+    <div class="feature-block">
+        <label>
+            <input type="checkbox" id="chkSpellingVariation">
+            Spelling Variation
+        </label>
+        <select id="spellingVariantType">
+            <option value="usToUk">US to UK English</option>
+            <option value="ukToUs">UK to US English</option>
+            <option value="random">Random Variations</option>
+        </select>
+    </div>
 
-        <button id="processBtn" class="ms-Button ms-Button--primary"><span class="ms-Button-label">Process Document</span></button>
-        
-        <div class="feature-divider"></div>
+    <button id="processBtn">Process Document with Modifications</button>
+    <div id="status" class="status"></div>
 
-        <h3 class="ms-font-xl">AI Trace Finder</h3>
-        <div class="feature-block">
-            <label for="highlightColor" class="ms-font-m">Highlight Color:</label>
-            <input type="color" id="highlightColor" value="#FFFF00">
-            <div class="button-group">
-                <button id="highlightBtn" class="ms-Button ms-Button--hero"><span class="ms-Button-label">Find & Highlight Traces</span></button>
-                <button id="deleteBtn" class="ms-Button ms-Button--hero destructive"><span class="ms-Button-label">Delete Highlighted Traces</span></button>
-            </div>
-        </div>
-        
-        <div id="status" class="status-message"></div>
-    </main>
+    <!-- Logic -->
     <script type="text/javascript" src="taskpane.js"></script>
 </body>
-
 </html>
-
